@@ -22,3 +22,4 @@ To then set up the branch of Ray, install the ray wheel:
 Next, go to the rllib folder:
 ` cd ray/python/ray/rllib ` and run the script `python setup-rllib-dev.py`. This will copy the rllib folder into the pip install of Ray and allow you to use the version of RLlib that is in your local folder by creating a softlink. 
 
+For details on ARCTIC see this preprint https://arxiv.org/abs/2101.10305. 
