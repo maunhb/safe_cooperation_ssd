@@ -1,7 +1,7 @@
 
 # Sequential Social Dilemma Games
 This repo is an open-source implementation of Sequential Social Dilemma (SSD) multi-agent matrix game environments.
-The implemented environments are structured to be compatible with OpenAIs gym environments (https://github.com/openai/gym) as well as RLlib's Multiagent Environment (https://github.com/ray-project/ray/blob/master/python/ray/rllib/env/multi_agent_env.py)
+The implemented environments are structured to be compatible with OpenAIs gym environments (https://github.com/openai/gym) as well as RLlib's Multiagent Environment (https://github.com/ray-project/ray/blob/master/python/ray/rllib/env/multi_agent_env.py) This is adapted from (https://github.com/eugenevinitsky/sequential_social_dilemma_games).
 
 ## Implemented Games
 
