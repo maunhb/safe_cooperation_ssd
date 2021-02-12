@@ -7,9 +7,16 @@ from ray.rllib.models import ModelCatalog
 from ray.tune import run_experiments
 from ray.tune.registry import register_env
 import tensorflow as tf
-from social_dilemmas.envs.p^c_matrix_env import CoopMatrixEnv
-from models.matrix_fc_net import FCNet
+from social_dilemmas.envs.pC_matrix_env import CoopMatrixEnv
+from social_dilemmas.matrix_fc_net import FCNet
 import numpy as np 
+
+''' 
+Trains a cooperation promoting belief agent. 
+
+Agent-0 is the cooperation promoting belief agent. They play against
+one opponent formed of two dummy agents. 
+'''
 
 matrix_game = "prisoners" 
 # matrix_game = "staghunt" 
@@ -51,36 +58,27 @@ tf.app.flags.DEFINE_float(
     'num_workers_per_device', 1,
     'Number of workers to place on a single device (CPU or GPU)')
 
-## custom callbacks:
+
+## CUSTOM CALLBACKS
 def on_episode_start(info):
-    #info.keys() ={"env", 'episode", "policy"}
     episode = info["episode"]
-    episode.user_data["cooperations_0"] = []
-    episode.user_data["cooperations_1"] = []
-    episode.user_data["cooperations_2"] = []
+    for i in [0,1,2]:
+        episode.user_data["cooperations_{}".format(i)] = []
 
 def on_episode_step(info):
     episode = info["episode"]
-    action_0 = float(episode.last_action_for("agent-0"))
-    action_1 = float(episode.last_action_for("agent-1"))
-    action_0 = np.clip(action_0, 0, 1)
-    action_1 = np.clip(action_1, 0, 1)
-    episode.user_data["cooperations_0"].append(1.0-action_0)
-    episode.user_data["cooperations_1"].append(1.0-action_1)
-
-    action_2 = float(episode.last_action_for("agent-2"))
-    action_2 = np.clip(action_2, 0, 1)
-    episode.user_data["cooperations_2"].append(1.0-action_2)
+    for i in [0,1,2]:
+        action = float(episode.last_action_for("agent-{}".format(i)))
+        action = np.clip(action, 0, 1)
+        episode.user_data["cooperations_{}".format(i)].append(1.0-action)
 
 def on_episode_end(info):
     episode = info["episode"]
-    cooperation_0 = np.mean(episode.user_data["cooperations_0"])
-    episode.custom_metrics["cooperation agent 0"] = cooperation_0
-    cooperation_1 = np.mean(episode.user_data["cooperations_1"])
-    episode.custom_metrics["cooperation agent 1"] = cooperation_1
-    cooperation_2 = np.mean(episode.user_data["cooperations_2"])
-    episode.custom_metrics["cooperation agent 2"] = cooperation_2
+    for i in [0,1,2]:
+        cooperation = np.mean(episode.user_data["cooperations_{}".format(i)])
+        episode.custom_metrics["cooperation agent {}".format(i)] = cooperation
 
+## SETUP
 def setup(algorithm, train_batch_size, num_cpus, num_gpus,
           num_agents, use_gpus_for_workers=False, use_gpu_for_driver=False,
           num_workers_per_device=1):

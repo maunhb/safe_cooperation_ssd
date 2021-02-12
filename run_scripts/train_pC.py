@@ -7,12 +7,15 @@ from ray.rllib.models import ModelCatalog
 from ray.tune import run_experiments
 from ray.tune.registry import register_env
 import tensorflow as tf
-from social_dilemmas.envs.matrix_env import MatrixEnv
+from social_dilemmas.envs.pC_matrix_env import CoopMatrixEnv
 from social_dilemmas.matrix_fc_net import FCNet
 import numpy as np 
 
 ''' 
-Trains an A3C baseline agent.
+Trains a cooperation promoting belief agent. 
+
+Agent-0 is the cooperation promoting belief agent. They play against
+one opponent formed of two dummy agents. 
 '''
 
 matrix_game = "prisoners" 
@@ -28,7 +31,7 @@ tf.app.flags.DEFINE_string(
     'algorithm', 'A3C',
     'Name of the rllib algorithm to use.')
 tf.app.flags.DEFINE_integer(
-    'num_agents', 2,
+    'num_agents', 3,
     'Number of agent policies')
 tf.app.flags.DEFINE_integer(
     'train_batch_size', 30000,
@@ -55,23 +58,23 @@ tf.app.flags.DEFINE_float(
     'num_workers_per_device', 1,
     'Number of workers to place on a single device (CPU or GPU)')
 
+
 ## CUSTOM CALLBACKS
 def on_episode_start(info):
-    #info.keys() ={"env", 'episode", "policy"}
     episode = info["episode"]
-    for i in [0,1]:
+    for i in [0,1,2]:
         episode.user_data["cooperations_{}".format(i)] = []
 
 def on_episode_step(info):
     episode = info["episode"]
-    for i in [0,1]:
+    for i in [0,1,2]:
         action = float(episode.last_action_for("agent-{}".format(i)))
         action = np.clip(action, 0, 1)
         episode.user_data["cooperations_{}".format(i)].append(1.0-action)
 
 def on_episode_end(info):
     episode = info["episode"]
-    for i in [0,1]:
+    for i in [0,1,2]:
         cooperation = np.mean(episode.user_data["cooperations_{}".format(i)])
         episode.custom_metrics["cooperation agent {}".format(i)] = cooperation
 
@@ -81,10 +84,10 @@ def setup(algorithm, train_batch_size, num_cpus, num_gpus,
           num_workers_per_device=1):
 
     def env_creator(_):
-        return MatrixEnv(matrix_game)
-    single_env = MatrixEnv(matrix_game)
+        return CoopMatrixEnv(matrix_game) 
+    single_env = CoopMatrixEnv(matrix_game)
 
-    env_name = "{}_baseline".format(matrix_game)
+    env_name = "{}_pC".format(matrix_game)
     register_env(env_name, env_creator)
 
     obs_space = single_env.observation_space
@@ -132,12 +135,12 @@ def setup(algorithm, train_batch_size, num_cpus, num_gpus,
     config.update({
                 "train_batch_size": FLAGS.train_batch_size,
                 "horizon":  100, 
-                "lr":  0.001,
+                "lr": 0.001,
                 "num_workers": num_workers,
                 "num_gpus": gpus_for_driver,  # The number of GPUs for the driver
                 "num_cpus_for_driver": cpus_for_driver,
                 "num_gpus_per_worker": num_gpus_per_worker,   # Can be a fraction
-                "num_cpus_per_worker": num_cpus_per_worker,   # Can be a fraction
+                "num_cpus_per_worker": num_cpus_per_worker,   # Can be a fraction 
                 "multiagent": {
                     "policy_graphs": policy_graphs,
                     "policy_mapping_fn": tune.function(policy_mapping_fn),
@@ -149,10 +152,8 @@ def setup(algorithm, train_batch_size, num_cpus, num_gpus,
                     "on_episode_step": tune.function(on_episode_step),
                     "on_episode_end": tune.function(on_episode_end)
                 }
-
     })
     return algorithm, env_name, config
-
 
 def main(unused_argv):
     ray.init(num_cpus=FLAGS.num_cpus, object_store_memory=50000000)

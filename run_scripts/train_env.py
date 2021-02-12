@@ -8,13 +8,21 @@ from ray.tune import run_experiments
 from ray.tune.registry import register_env
 import tensorflow as tf
 from social_dilemmas.envs.state_matrix_env import MatrixEnv
-from models.matrix_fc_net import FCNet
+from social_dilemmas.matrix_fc_net import FCNet
 import numpy as np 
+
+'''
+Compiles a standard environment to host tournaments in.
+'''
+
+matrix_game = "prisoners" 
+# matrix_game = "staghunt" 
+# matrix_game = "routechoice" 
 
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string(
-    'exp_name', 'prisoner_agents',
+    'exp_name', '{}_agents'.format(matrix_game),
     'Name of the ray_results experiment directory where results are stored.')
 tf.app.flags.DEFINE_string(
     'algorithm', 'A3C',
@@ -52,10 +60,10 @@ def setup(algorithm, train_batch_size, num_cpus, num_gpus,
           num_workers_per_device=1):
 
     def env_creator(_):
-        return MatrixEnv("prisoners")
-    single_env = MatrixEnv("prisoners")
+        return MatrixEnv(matrix_game)
+    single_env = MatrixEnv(matrix_game)
 
-    env_name = "prisoners_env"
+    env_name = "{}_env".format(matrix_game)
     register_env(env_name, env_creator)
 
     obs_space = single_env.observation_space
@@ -132,7 +140,7 @@ def main(unused_argv):
                                       FLAGS.num_workers_per_device)
 
     if FLAGS.exp_name is None:
-        exp_name = 'prisoners_' + FLAGS.algorithm
+        exp_name = matrix_game + FLAGS.algorithm
     else:
         exp_name = FLAGS.exp_name
     print('Commencing experiment', exp_name)
