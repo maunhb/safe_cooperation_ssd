@@ -55,8 +55,7 @@ class MatrixAgent(Agent):
 
     @property
     def observation_space(self):
-        #return Discrete(11)
-        return Box(low=0, high=1, shape=(1,))
+        return Discrete(11)
 
     def get_done(self):
         return False

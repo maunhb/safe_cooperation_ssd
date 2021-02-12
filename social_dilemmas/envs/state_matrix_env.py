@@ -10,7 +10,7 @@ class MatrixEnv(MultiAgentEnv):
         Parameters
         ----------
         game: string
-            Name of matrix game (prisoners, staghunt or routechoice).
+            Name of matrix game (prisoners, staghunt, or routechoice).
         """
         self.num_agents = 2
         self.game = game

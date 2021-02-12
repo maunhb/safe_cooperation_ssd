@@ -1,10 +1,11 @@
 import numpy as np
 import random 
 from ray.rllib.env import MultiAgentEnv
-from social_dilemmas.envs.state_matrix_agent import MatrixAgent
+from social_dilemmas.envs.onehot_state_matrix_agent import MatrixAgent
 
 class CoopMatrixEnv(MultiAgentEnv):
     def __init__(self, game, cooperation_level=0.5):
+        ''' Cooperation level x in [0,1]. '''
         self.num_agents = 4
         self.agents = {}
         self.game = game
